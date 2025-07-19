@@ -15,5 +15,5 @@ jobs:
     steps:
     - uses: actions/checkout@v4
     - name: Build the Docker image
-      working-directory: ./banking-service/src/main/docker
+      working-directory: /home/runner/work/banking-service/banking-service/src/main/docker'
       run: docker build . --file Dockerfile --tag banking-service:$(date +%s)
