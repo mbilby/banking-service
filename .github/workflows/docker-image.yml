@@ -7,13 +7,11 @@ on:
     branches: [ "main" ]
 
 jobs:
-
   build:
-
     runs-on: ubuntu-latest
-
     steps:
     - uses: actions/checkout@v4
     - name: Build the Docker image
-      working-directory: /home/runner/work/banking-service/banking-service/src/main/docker'
+      # Use the relative path from the repository root
+      working-directory: ./banking-service/src/main/docker
       run: docker build . --file Dockerfile --tag banking-service:$(date +%s)
