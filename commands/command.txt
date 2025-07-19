@@ -1,0 +1,20 @@
+# Gerar imagem da aplicação
+    mvn package "-Dquarkus.container-image.build=true"
+    ou ./mvnw clean package -"Dquarkus.container-image.build=true"
+
+# Visualizar imagens
+    docker images
+
+# Gerar tag
+    ex: docker tag [usuario-da-maquina]/[nome-da-aplicação]:[versao] [usuario-docker-hub]/[nome-da-aplicação]:[tag: v1, v2, v3]
+    docker tag marcelo.barbosa/banking-service:1.0.0-SNAPSHOT marcelobilby/baking-service:v1
+
+# Docker login
+    docker login -u [usuario-docker]
+    siga os passos
+
+# Envio da imagem docker
+
+docker push [nome-do-repositorio]/[nome-da-aplicação]:[versão-da-tag]
+
+
