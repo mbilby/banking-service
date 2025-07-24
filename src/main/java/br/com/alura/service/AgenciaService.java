@@ -3,11 +3,15 @@ package br.com.alura.service;
 import br.com.alura.domain.Agencia;
 import br.com.alura.domain.http.AgenciaHTTP;
 import br.com.alura.domain.http.SituacaoCadastral;
+import br.com.alura.utils.Utils;
 import br.com.alura.exceptions.AgenciaInativaOuNaoEncontradaException;
 import br.com.alura.repository.AgenciaRepository;
 import br.com.alura.service.http.SituacaoCadastralHttpService;
 import io.micrometer.core.instrument.MeterRegistry;
+import io.quarkus.hibernate.reactive.panache.common.WithSession;
+import io.quarkus.hibernate.reactive.panache.common.WithTransaction;
 import io.quarkus.logging.Log;
+import io.smallrye.mutiny.Uni;
 import jakarta.enterprise.context.ApplicationScoped;
 import org.eclipse.microprofile.rest.client.inject.RestClient;
 
@@ -28,48 +32,65 @@ public class AgenciaService {
         this.meterRegistry = meterRegistry;
     }
 
-    public void cadastrar(Agencia agencia) {
+    @WithTransaction
+    public Uni<Void> cadastrar(Agencia agencia) {
 
-        AgenciaHTTP agenciaHTTP = situacaoCadastralHttpService
+        Uni<AgenciaHTTP> agenciaHTTP = situacaoCadastralHttpService
                 .buscarPorCnpj(agencia.getCnpj());
 
-        if (agenciaHTTP != null && agenciaHTTP.getSituacaoCadastral().equals(SituacaoCadastral.ATIVO)) {
-            Log.info(String.format("A agência com CNPJ: %s foi cadastrada!", agencia.getCnpj()));
-            meterRegistry.counter("agencia_adicionada_count").increment();
-            agenciaRepository.persist(agencia);
-        } else {
-            Log.info(String.format("A agência com CNPJ: %s não foi cadastrada!", agencia.getCnpj()));
-            meterRegistry.counter("agencia_nao_adicionada_count").increment();
-            throw new AgenciaInativaOuNaoEncontradaException();
-        }
+        Utils utils = new Utils(agenciaRepository, meterRegistry);
+
+        return agenciaHTTP
+                .onItem()
+                .ifNull()
+                .failWith(new AgenciaInativaOuNaoEncontradaException())
+                .onItem()
+                .transformToUni(item -> utils.persistirSeAtivo(agencia, item));
+
+    }
+    @WithSession
+    public Uni<List<Agencia>> buscaAgencias() {
+
+        Uni<List<Agencia>> agencias = agenciaRepository.listAll();
+
+        return agencias
+                .onItem()
+                .ifNull()
+                .failWith(new IllegalStateException())
+                .onItem()
+                .invoke(list -> {
+                    Log.info(String.format("Agencias retornadas: %s", list.size()));
+                    meterRegistry.gauge("agencias_total", list.size());
+                });
+
     }
 
-    public List<Agencia> buscaAgencias() {
-        List<Agencia> agencias = agenciaRepository.listAll();
-        Log.info(String.format("Agencias retornadas: %s", agencias.size()));
-        meterRegistry.gauge("agencias_total", agencias.size());
-        return agencias;
-    }
+    @WithSession
+    public Uni<Agencia> buscaAgenciaPorId(long id) {
 
-    public Agencia buscaAgenciaPorId(long id) {
         return agenciaRepository.findById(id);
     }
 
-    public void deletarAgenciaPorId(long id) {
+    @WithTransaction
+    public Uni<Void> deletarAgenciaPorId(long id) {
         Log.info(String.format("A agência com CNPJ: %d foi cadastrada!", id));
-        agenciaRepository.deleteById(id);
+        return agenciaRepository
+                .deleteById(id)
+                .replaceWithVoid();
     }
 
-    public void AlterarAgencia(Agencia agencia) {
-        Agencia agenciaAtual = agenciaRepository.findById(agencia.getId());
+    @WithTransaction
+    public Uni<Void> AlterarAgencia(Agencia agencia) {
+        Uni<Agencia> agenciaAtualUni = agenciaRepository.findById(agencia.getId());
+        Utils utils = new Utils(agenciaRepository, meterRegistry);
 
-        if (agenciaAtual != null) {
-            agenciaAtual.setNome(agencia.getNome());
-            agenciaAtual.setRazaoSocial(agencia.getRazaoSocial());
-            agenciaAtual.setCnpj(agencia.getCnpj());
-        }
-        else {
-            throw new IllegalStateException("Agencia com ID " + agencia.getId() + " não encontrada!");
-        }
+        return agenciaAtualUni
+                .onItem()
+                .ifNull()
+                .failWith(new IllegalStateException("Agencia com ID " + agencia.getId() + " não encontrada!"))
+                .onItem()
+                .transformToUni(founded -> {
+                    return utils.updateSeAtivo(agencia);
+                });
     }
 }

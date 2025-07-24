@@ -1,7 +1,7 @@
 package br.com.alura.repository;
 
 import br.com.alura.domain.Agencia;
-import io.quarkus.hibernate.orm.panache.PanacheRepository;
+import io.quarkus.hibernate.reactive.panache.PanacheRepository;
 import jakarta.enterprise.context.ApplicationScoped;
 
 @ApplicationScoped
