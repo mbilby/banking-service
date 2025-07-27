@@ -13,3 +13,13 @@ create table if not exists agencia(
     cnpj text not null,
     endereco_id int references endereco
 );
+
+create table if not exists agencia_erro(
+    id serial primary key,
+    nome text not null,
+    cnpj text not null,
+    razao_social text not null,
+    endereco_id int references endereco,
+    motivo_erro text not null,
+    data_erro timestamp
+);
