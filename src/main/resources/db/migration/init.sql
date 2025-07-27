@@ -6,6 +6,14 @@ create table if not exists endereco(
     numero int not null
 );
 
+create table if not exists endereco_erro(
+    id serial primary key,
+    rua text not null,
+    logradouro text not null,
+    complemento text not null,
+    numero int not null
+);
+
 create table if not exists agencia(
     id serial primary key,
     nome text not null,
@@ -19,7 +27,7 @@ create table if not exists agencia_erro(
     nome text not null,
     cnpj text not null,
     razao_social text not null,
-    endereco_id int references endereco,
     motivo_erro text not null,
-    data_erro timestamp
+    data_erro timestamp,
+    endereco_id int references endereco_erro
 );

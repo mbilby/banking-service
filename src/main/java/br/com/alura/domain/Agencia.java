@@ -2,8 +2,6 @@ package br.com.alura.domain;
 
 import jakarta.persistence.*;
 
-import javax.xml.namespace.QName;
-
 @Entity
 public class Agencia {
 
@@ -66,5 +64,9 @@ public class Agencia {
 
     public void setCnpj(String cnpj) {
         this.cnpj = cnpj;
+    }
+
+    public void setEndereco(Endereco endereco) {
+        this.endereco = endereco;
     }
 }

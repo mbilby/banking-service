@@ -2,6 +2,7 @@ package br.com.alura.controller;
 
 import br.com.alura.domain.Agencia;
 import br.com.alura.service.AgenciaService;
+import io.smallrye.common.annotation.Blocking;
 import io.smallrye.common.annotation.NonBlocking;
 import io.smallrye.mutiny.Uni;
 import jakarta.transaction.Transactional;
